@@ -1,0 +1,98 @@
+---
+title: "Tarea8"
+author: "jramirez"
+date: "14/12/2019"
+output: html_document
+---
+# Tarea 8
+
+Carga en R o en Python el CSV de la web http://winterolympicsmedals.com/medals.csv y responde a las preguntas de la tarea.
+
+# Leyendo el DataSet
+
+```{r}
+df = read.csv(file = "http://winterolympicsmedals.com/medals.csv", header = TRUE)
+head(df)
+str(df)
+names(df)
+```
+
+SHow levels
+```{r}
+sapply(df, levels)
+```
+
+
+
+# ¿Cuantos deportistas aparecen en el data frame?
+
+```{r}
+nrow(df)
+```
+
+
+# ¿Cuantos han ganado medallas de oro, cuantos de plata y cuantos de bronce?
+```{r}
+subset(df, df$Medal == 'Gold') -> oros
+nrow(oros)
+subset(df, df$Medal == 'Silver') -> silver
+nrow(silver)
+subset(df, df$Medal == 'Bronze') -> bronze
+nrow(bronze)
+```
+
+otra manera de filtrar
+```{r}
+nrow(df[df$Medal == 'Gold',])
+nrow(df[df$Medal == 'Silver',])
+nrow(df[df$Medal == 'Bronze',])
+```
+
+
+#¿En cuantos lugares se han hecho olimpiadas de invierno?
+
+```{r}
+length(levels(df$City))
+```
+
+
+# ¿Cuantos hombres y cuantas mujeres hay?
+
+```{r}
+nrow(df[df$Event.gender == "M",])
+nrow(df[df$Event.gender == "W",])
+nrow(df[df$Event.gender == "X",])
+```
+
+
+# ¿En qué año participaron más deportistas?
+
+con table
+```{r}
+table(df$Year)
+```
+
+creando data frame
+```{r}
+data.frame(Year = data.frame(table(df$Year))$Var1, Count = data.frame(table(df$Year))$Freq)
+```
+
+usando aggregate
+```{r}
+aggregate(cbind(count = Year) ~ Year, 
+          data = df, 
+          FUN = function(x){NROW(x)})
+```
+
+
+#El campo NOC indica el país del ganador de la medalla. ¿Qué país puede presumir de haber ganado más medallas de oro en los juegos de invierno entre 1960 y 1996?
+```{r}
+df_test = df[df$Medal == "Gold" & df$Year > 1959 & df$Year < 1997,]
+
+aggregate(cbind(count = NOC) ~ NOC,
+  data = df_test,
+  FUN = function(x){NROW(x)}
+  )
+```
+
+
