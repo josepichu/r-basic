@@ -1,0 +1,24 @@
+---
+title: "Tarea11"
+author: "jramirez"
+date: "20/12/2019"
+output: html_document
+---
+ 
+### Dad la instrucción que defina la tabla de frecuencias absolutas de un vector llamado "alumnos
+```{r}
+alumnos = c("Jose", "Antonio", "Jose", "Jose", "Luis", "Pedro", "Antonio", "Jose", "Luis")
+table(alumnos)
+```
+
+### Con una sola instrucción, definid la tabla de frecuencias relativas de un vector llamado "edades"
+```{r}
+edades = c(10, 15, 23, 34, 12, 10, 10, 12, 32)
+round(100*prop.table(table(edades)), 2)
+```
+
+### Con una sola instrucción, definid la tabla bidimensional conjunta de frecuencias absolutas de dos vectores llamados "altura" y "peso", de forma que las filas correspondan a "altura" y las columnas a "peso" 
+```{r}
+
+```
+
