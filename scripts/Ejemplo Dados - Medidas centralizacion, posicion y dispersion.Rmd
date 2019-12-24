@@ -1,0 +1,65 @@
+---
+title: "Ejemplo Dados - Medidas centralizacion, posicion y dispersion"
+author: "jramirez"
+date: "24/12/2019"
+output: html_document
+---
+
+### Muestro de dados con semilla de aleatoriedad
+
+```{r}
+set.seed(162017)
+dados = sample(1:6,25,replace = TRUE)
+dados
+set.seed(NULL)
+```
+
+### Juntamos en un dataframe todas las frecuencias
+```{r}
+
+table(dados) # freq abs
+prop.table(dados) # freq rel
+cumsum(table(dados)) # freq acum 
+round(cumsum(prop.table(dados)), 2) # freq acum 
+
+dados.df <- data.frame(
+              Puntuacion = 1:6,
+              Fr.abs = as.vector(table(dados)),
+              Fr.rel = as.vector(prop.table(table(dados))),
+              Fr.acu = as.vector(cumsum(table(dados))),
+              Fr.racu = as.vector(cumsum(prop.table(table(dados))))
+            )
+dados.df
+
+```
+
+### Medidas de centralización, Media, Mediana, Moda
+
+```{r}
+
+mean(dados)
+median(dados)
+as.numeric(names(which(table(dados)==max(table(dados))))) 
+
+```
+
+### Medidas de posición
+```{r}
+dados.df
+quantile(dados,0.25) #Primer cuartil or percentil 25
+
+```
+
+### Medidas de dispersión
+```{r}
+diff(range(dados)) #rango
+IQR(dados) #rango intercuartílico
+var(dados) #varianza muestral
+sd(dados) #desviación tipica muestral
+
+n = length(dados)
+var(dados)*(n-1)/n # varianza 
+sd(dados)*sqrt((n-1)/n) # desviación típica
+
+```
+

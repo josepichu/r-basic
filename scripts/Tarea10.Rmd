@@ -180,6 +180,9 @@ round(100*prop.table(tt3, margin = 2), 2)
 round(100*prop.table(tt3, margin = 2), 2)
 round(100*prop.table(tt3, margin = c(1,2)), 2)
 
+ftable(tt3)
+
+
 plot(tt3, main = "Diagrama de Mosaico")
 
 ```
