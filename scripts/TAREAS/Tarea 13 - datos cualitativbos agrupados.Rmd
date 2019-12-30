@@ -1,0 +1,188 @@
+---
+title: "datos cualitativos agrupados"
+author: "jramirez"
+date: "26/12/2019"
+output: html_document
+---
+
+### Lee atentamente las transparencias del tema 9 e implementa las reglas que se comentan en los ejercicios
+### Da el algoritmo para reproducir el proceso de generación de clases y sus marcas respectivo para el número de clases obtenido con la regla de la Scott en  Python.
+
+```{r}
+
+crabs = read.table("../../data/datacrab.txt", header = TRUE)
+str(crabs)
+
+cw = crabs$width
+
+# 1. Decidir el número de intervalos que vamos a utilizar
+
+# regla de la raíz cuadrada
+n = length(cw)
+nInt = ceiling(sqrt(n))
+
+# regla de sturges
+nInt = nclass.Sturges(cw)
+
+# regla de scott
+nInt = nclass.scott(cw)
+
+# regla de Freedman-Diaconis
+nInt = nclass.FD(cw)
+
+# 2. Decidir la amplitud de estos intervalos
+A = diff(range(cw)) / nInt
+
+# Como nuestros datos están expresados en mm con una precisión de una cifra decimal, debemos redondear por exceso a un cifra decimal el resultado obtenido. Por lo tanto, nuestra amplitud será de
+A = round(A + 0.01, 1)
+
+# 3. Acumular los extremos de los intervalos
+L1 = min(cw)-1/2*0.1
+L = L1 + A*(0:nInt)
+L
+
+# 4. Calcular el valor representativo de cada intervalo, su marca de clase
+X1 = (L[1]+L[2])/2
+X = X1 + A*(0:9)
+X
+
+crabs$widthGroup = ordered(cut(x = cw, breaks = L, right = FALSE, include.lowest = FALSE))
+
+str(crabs)
+
+# juntamos info
+
+#manualmente
+table(crabs$widthGroup)
+prop.table(table(crabs$widthGroup))
+cumsum(table(crabs$widthGroup))
+cumsum(prop.table(table(crabs$widthGroup)))
+
+data.frame(
+  widthGroup = levels(crabs$widthGroup),
+  freq.abs = as.vector(table(crabs$widthGroup)),
+  freq.rel = as.vector(prop.table(table(crabs$widthGroup))),
+  freq.cum.abs = as.vector(cumsum(table(crabs$widthGroup))),
+  freq.cum.rel = as.vector(cumsum(prop.table(table(crabs$widthGroup))))
+  )
+
+# con las funciones
+tablaInt = TablaFrecs(cw, nInt, A, 0.1)
+
+# con hist
+str(hist(x = cw, breaks = L, right = FALSE, plot = FALSE))
+
+```
+### Funciones para la agrupación de un vector
+
+```{r}
+TablaFrecs = function(x,k,A,p){ 
+  L = min(x)-p/2+A*(0:k)
+  x_cut = cut(x, breaks = L, right=FALSE)
+  intervals = levels(x_cut)
+  mc = (L[1]+L[2])/2+A*(0:(k-1))
+  Fr.abs = as.vector(table(x_cut)) 
+  Fr.rel = round(Fr.abs/length(x),4) 
+  Fr.cum.abs = cumsum(Fr.abs) 
+  Fr.cum.rel = cumsum(Fr.rel)
+  tabla = data.frame(intervals, mc, Fr.abs, Fr.cum.abs, Fr.rel, Fr.cum.rel)
+  tabla
+}
+
+TablaFrecs.L = function(x,L,V){
+  x_cut = cut(x, breaks=L, right=FALSE, include.lowest=V)
+  intervals = levels(x_cut)
+  mc = (L[1:(length(L)-1)]+L[2:length(L)])/2
+  Fr.abs = as.vector(table(x_cut)) 
+  Fr.rel = round(Fr.abs/length(x),4)
+  Fr.cum.abs = cumsum(Fr.abs)
+  Fr.cum.rel = cumsum(Fr.rel)
+  tabla = data.frame(intervals, mc, Fr.abs, Fr.cum.abs, Fr.rel, Fr.cum.rel)
+  tabla
+  }
+```
+
+### cálculo de estadísticos de datos agrupados
+
+```{r}
+
+TOT = length(crabs$input)
+
+# media intervalo
+anchura.media = round(sum(tablaInt$Fr.abs*tablaInt$mc)/TOT, 3)
+anchura.media
+
+# varianza 
+anchura.var = round(sum(tablaInt$Fr.abs*tablaInt$mc^2)/TOT-anchura.media^2,3)
+anchura.var
+ 
+# Desv típica
+anchura.dt = round(sqrt(anchura.var),3)
+anchura.dt
+
+#Intervalo modal
+I.modal = tablaInt$intervals[which(tablaInt$Fr.abs == max(tablaInt$Fr.abs))]
+I.modal #Intervalo modal
+
+```
+
+### Histograma
+
+```{r}
+
+# histograma frecuencias absolutas
+histAbs = function(x,L) {
+  h = hist(x, breaks = L, right = FALSE, freq = FALSE,
+           xaxt = "n", yaxt = "n", col = "lightgray", 
+           main = "Histograma de frecuencias absolutas", 
+           xlab = "Intervalos y marcas de clase",ylab = "Frecuencias absolutas")
+  axis(1, at=L)
+  text(h$mids, h$density/2, labels=h$counts, col="purple") 
+}
+
+# histograma frecuencias absolutas acumuladas
+histAbsCum = function(x,L) {
+  h = hist(x, breaks = L, right = FALSE , plot = FALSE) 
+  h$density = cumsum(h$density)
+  plot(h, freq = FALSE, xaxt = "n", yaxt = "n", col = "lightgray", 
+       main = "Histograma de frecuencias\nabsolutas acumuladas", xlab = "Intervalos", 
+       ylab = "Frec. absolutas acumuladas")
+  axis(1, at=L)
+  text(h$mids, h$density/2, labels = cumsum(h$counts), col = "purple") 
+}
+
+# histograma frecuencias relativas
+histRel = function(x,L) {
+  h = hist(x, breaks=L, right=FALSE , plot=FALSE)
+  t = round(1.1*max(max(density(x)[[2]]),h$density),2) 
+  plot(h, freq = FALSE, col = "lightgray", 
+       main = "Histograma de frec. relativas\ny curva de densidad estimada", 
+       xaxt="n", ylim=c(0,t), xlab="Intervalos", ylab="Densidades")
+  axis(1, at = L) 
+  text(h$mids, h$density/2, labels = round(h$counts/length(x),2), col = "blue")
+  lines(density(x), col = "purple", lwd = 2) 
+  }
+
+# histograma frecuencias relativas acumuladas
+histRelCum = function(x,L){
+  h = hist(x, breaks = L, right = FALSE , plot = FALSE)
+  h$density = cumsum(h$counts)/length(x)
+  plot(h, freq = FALSE, 
+      main = "Histograma de frec. rel. acumuladas\n y curva de distribución estimada", 
+      xaxt = "n", col = "lightgray", xlab = "Intervalos", 
+      ylab = "Frec. relativas acumuladas") 
+  axis(1, at = L)
+  text(h$mids, h$density/2, labels = round(h$density ,2), col = "blue")
+  dens.x = density(x)
+  dens.x$y = cumsum(dens.x$y)*(dens.x$x[2]-dens.x$x[1]) 
+  lines(dens.x,col = "purple",lwd = 2)
+}
+
+#hist(x = cw, breaks = L, right = FALSE)
+
+histAbs(cw, L)
+histAbsCum(cw, L)
+
+```
+
+

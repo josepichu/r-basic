@@ -1,0 +1,122 @@
+---
+title: "Notas matemáticos Ingenieros"
+author: "jramirez"
+date: "24/12/2019"
+output: html_document
+---
+
+### Carga el conjunto de datos de la carpeta data llamado grades.txt en R y responde a las siguientes preguntas
+```{r}
+df = read.table("../../data/grades.txt", header = TRUE)
+head(df)
+str(df)
+levels(df$estudio)
+```
+
+
+#### data frame con resumen estadístico, columna cualitativa calificaciones
+```{r}
+
+df$nota2 = round(df$nota, 2)
+ 
+notas_labels = cut(df$nota2, breaks = c(0, 5, 7, 9, 10), right = FALSE, 
+                 labels = c("Suspendido", "Aprobado", "Notable", "Sobresaliente"))
+
+
+df$calificacion = ordered(notas_labels)
+
+str(df)
+
+dfEstCali = df[,c(1, 4)]
+
+table(dfEstCali)
+prop.table(table(dfEstCali))
+prop.table(table(dfEstCali), margin = 1)
+prop.table(table(dfEstCali), margin = 2)
+
+barplot(table(dfEstCali), legend.text = TRUE)
+
+# freq acumuladas
+t(apply(table(dfEstCali), MARGIN = 1, FUN = cumsum))
+
+# freq acumuladas
+t(apply(prop.table(table(dfEstCali), margin = 1), MARGIN = 1, FUN = cumsum))
+
+barplot(apply(prop.table(table(dfEstCali), margin = 1), MARGIN = 1, FUN = cumsum), beside = TRUE, legend.text = TRUE)
+```
+
+### Calcula la media, la mediana y la moda redondeada a dos cifras decimales de las notas numéricas de los exámenes tanto de forma conjunta como por estudio universitaria
+
+```{r}
+
+
+n = length(df$nota2)
+
+# global
+mean(df$nota2)# media 1
+sum(df$nota2)/n #media 2
+median(df$nota2) # mediana
+as.numeric(names(which(table(df$nota2) == max(table(df$nota2))))) # moda
+
+# con sumary
+summary(df)
+
+
+
+# por carrera
+#aggregate(nota~estudio, data = df, FUN = summary)
+
+by(df$nota, df$estudio, FUN = summary)
+
+aggregate(nota~estudio, data = df, FUN = mean)
+aggregate(nota~estudio, data = df, FUN = median)
+by(df$nota, df$estudio, FUN = mean)
+
+```
+
+se observa que el grupo de Mates obtiene la nota media más alta. Además, informática y Mates están por encima de la media global 3.87
+
+### ¿En qué grupo observamos más variación de notas? Justifica tu respuesta
+
+```{r}
+aggregate(nota~estudio, data = df, FUN = sd)
+#by(df$nota2, df$estudio, FUN = sd)
+
+boxplot(nota~estudio, data = df, col = "lightgreen",
+        xlab = "Estudio", ylab = "Nota")
+medias= aggregate(nota~estudio, data = df, FUN = mean)
+points(medias, col = "pink", pch = 15)
+
+str(boxplot(nota~estudio, data = df, col = "lightgreen",
+        xlab = "Estudio", ylab = "Nota"))$stats
+
+###########################################################
+# JUNTAMOS TODAS LAS MEDIDAS ESTADISTICAS EN UN DATA FRAME
+###########################################################
+
+moda <- function(df) {
+  return (as.numeric(names(which(table(df) == max(table(df)))))) # moda
+}
+
+# medidas de centralización
+Medias = round(by(df$nota2, df$estudio, FUN = mean), 2)
+Medianas = round(by(df$nota2, df$estudio, FUN = median), 2)
+Modas = by(df$nota2, df$estudio, FUN = function(df) moda(df))
+
+# medidas de dispersión
+Rangos = by(df$nota2, df$estudio, FUN = range) #rango (máximo y mínimo)
+RangoInters = by(df$nota2, df$estudio, FUN = IQR) #rango intercuartílico
+Varianzas = by(df$nota2, df$estudio, FUN = var) #varianza muestral
+Desviaciones = by(df$nota2, df$estudio, FUN = sd) #desviación típica muestral
+
+resumen.df = data.frame(cbind(Medias, Medianas, Modas, Rangos, RangoInters, Varianzas, Desviaciones))
+
+
+
+
+
+```
+
+### ¿Observas algunos valores atípicos en el boxplot anterior? ¿A qué grupo pertence?
+
+
